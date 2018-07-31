@@ -2,6 +2,8 @@
 
 ## Why the hell would I like to use JSON in java?
 
+// Not only in event sourcing but also in all distributed systems where we need to send messages/objects over the network
+
 Working with [Event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html), we often need to convert java object 
 to send them through network or to store them to an event store. A Simple way to do that is to use Json format.  
 For example: We can manipulate this kind of json object :
@@ -29,16 +31,15 @@ public class UserCreation {
 
 We can use libraries like [Gson](https://github.com/google/gson) or [Jackson](https://github.com/FasterXML/jackson) to 
 convert automatically from one format to the other. But that's not the subject of this article and what I'm about to
-talk works with both of this libraries.
+talk works with both of these libraries.
 
 Okay, we have the java representation of our json object. But how can we be sure that this class will keep representing
-this json object with new functionality and refactoring coming to our codebase? Only one answer here : **TESTS !**  
-Keep in mind that I don't want to check that Jackson/Gson does its job, I want to check that my object match the json 
-format. I'm not testing the library.
+this json object with new functionality and refactoring coming to our codebase? Only one answer here: **TESTS !**  
+Keep in mind that I don't want to check that Jackson or Gson does its job (I'm not testing the library!), I want to check that my object matches the json format. 
 
 ## How to tests json conversion?
 
-The simplest way to test the conversion, is to use the library to convert to json format and compare that as a string.
+The simplest way to test the conversion, is to convert firstly the object to its json format and then to compare it as a string.
 Example :
 ```java
 public class UserCreationTest {
@@ -64,7 +65,7 @@ public class UserCreationTest {
 }
 ```
 
-That test is for serialization but we should also write a test for deserialization too.
+This conversion from object to json is what we called serialization. The opposite way that convert json to object is called deserialisation. So, we should also write a test for deserialization.
 
 That test can work but it has a lot of problems :
 * Jackson can write properties in any order.
@@ -100,17 +101,16 @@ public class UserCreationTest {
 }
 ```
 
-Did you noticed the only addition was `JSONAssert` before `assertEquals`?
-So this change will solve the first two lines of our problems :
+JSONAssert is really a nice library and I invite you to read the readme which is almost the whole documentation you will need.  If you work with springboot, you don't need to add a dependency as it is already included in the dependency tree :wink:
+
+Instead, switching to the JSONAssert implies only one and only one modification: adding `JSONAssert` before `assertEquals`?
+With this change we fix the first two lines in our problems list:
 * ~~Jackson can write properties in any order.~~
 * ~~Error message are awful to read when the test fails~~
 
-That's really a nice library and I invite you to read the readme which is almost the whole documentation you will need.  
-If you work with springboot, you don't need to add a dependency as it is already included in the dependency tree :wink:
-
 ## Cool but I'm using [assertj](https://github.com/joel-costigliola/assertj-core) and I don't like `assertEquals`
 
-I have a solution for you and the best part is that it will also solve the last point.  
+I have a solution for you and the best part is that it will also fix the last point.  
 [advertising]So if you don't know assertJ, go check it out, it is a great library to improve your tests :heart:[/advertising]
 
 For this part, there is a big downside though, you need to be bound to Springboot... I'm a bit sad, but someday I think
@@ -140,6 +140,8 @@ public class UserCreationTest {
 initialized my jacksonTester variable and displays a warning that I really dislike. It also uses tons of reflexion to 
 determine types and I am not a fan of that, when I can simply put it.*
 
+// je pense que ça vaut le coup de présenter l'autre solution que tu n'aimes pas. Ca aide le lecteur à comprendre
+
 The file `userCreation.json` can be put in test/resources folder with that content :
 ```json
 {
@@ -153,3 +155,6 @@ The file `userCreation.json` can be put in test/resources folder with that conte
 Your IDE will be able to link the file, so no worries to lose hours looking for the file somewhere :wink:   
 It also solve the last problem, as the test is really shorter, and the file is a json so your IDE can help you with
 syntax highlighting and format validation.
+
+// Tu pourrais donner également quelques exemples avec les cas d'erreur si ça te semble pertinent
+// aussi, il y a un cas mais je ne sais pas ces librairies nous permettent de le détecter. Quand on supprime par erreur les getters/setters : est-ce qu'il y a un moyen simple de détecter que les champs pertinents n'ont plus de getter/setter ce qui pourrait lever des exceptions. 
